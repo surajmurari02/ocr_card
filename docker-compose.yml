@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  cardscan-pro:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cardscan-pro
+    ports:
+      - "8080:8080"
+    environment:
+      - FLASK_ENV=production
+      - OCR_API_URL=${OCR_API_URL:-http://3.108.164.82:1428/upload}
+      - MAX_CONTENT_LENGTH=${MAX_CONTENT_LENGTH:-16777216}
+      - REQUEST_TIMEOUT=${REQUEST_TIMEOUT:-30}
+      - MAX_RETRIES=${MAX_RETRIES:-3}
+      - RETRY_DELAY=${RETRY_DELAY:-1}
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "com.cardscanpro.description=CardScan Pro - AI Business Card Scanner"
+      - "com.cardscanpro.version=1.0.0"
+
+  # Optional: Add Nginx reverse proxy for production
+  nginx:
+    image: nginx:alpine
+    container_name: cardscan-pro-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - cardscan-pro
+    restart: unless-stopped
+    profiles:
+      - production
+
+networks:
+  default:
+    name: cardscan-pro-network
