@@ -3,12 +3,15 @@
   "name": "cardscan-pro",
   "functions": {
     "api/run.py": {
-      "runtime": "@vercel/python",
+      "runtime": "vercel-python@0.5.1",
       "maxDuration": 30
     }
   },
   "rewrites": [
-    { "source": "/(.*)", "destination": "/api/run.py" }
+    {
+      "source": "/(.*)",
+      "destination": "/api/run.py"
+    }
   ],
   "env": {
     "FLASK_ENV": "production",
