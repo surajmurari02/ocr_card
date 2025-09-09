@@ -1,12 +1,6 @@
 {
   "version": 2,
   "name": "cardscan-pro",
-  "functions": {
-    "api/run.py": {
-      "runtime": "@vercel/python",
-      "maxDuration": 30
-    }
-  },
   "rewrites": [
     { "source": "/(.*)", "destination": "/api/run.py" }
   ],
