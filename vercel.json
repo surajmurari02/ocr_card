@@ -8,10 +8,7 @@
     }
   },
   "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/api/run.py"
-    }
+    { "source": "/(.*)", "destination": "/api/run.py" }
   ],
   "env": {
     "FLASK_ENV": "production",
