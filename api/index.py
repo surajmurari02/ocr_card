@@ -400,20 +400,18 @@ HTML_TEMPLATE = """
                             Drop your business card image here or click to upload
                         </p>
                         
-                        <!-- Upload Form -->
-                        <form method="POST" enctype="multipart/form-data" action="/process" id="uploadForm">
-                            <input type="file" name="image" accept="image/*" id="imageInput" class="hidden" required onchange="previewImage(this)">
-                            <button 
-                                type="button"
-                                class="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-semibold shadow-elegant hover:shadow-elegant-lg transition-all duration-200 mb-6 group-hover:scale-105"
-                                onclick="document.getElementById('imageInput').click()"
-                            >
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-                                </svg>
-                                <span>Select File</span>
-                            </button>
-                        </form>
+                        <!-- Upload Button -->
+                        <button 
+                            class="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-semibold shadow-elegant hover:shadow-elegant-lg transition-all duration-200 mb-6 group-hover:scale-105"
+                            id="uploadBtn"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                            </svg>
+                            <span>Select File</span>
+                        </button>
+                        
+                        <input type="file" id="imageInput" accept="image/*" class="hidden">
                         
                         <!-- Format Info -->
                         <div class="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3">
@@ -424,54 +422,73 @@ HTML_TEMPLATE = """
                     </div>
                 </section>
                 
-                <!-- Preview Section -->
-                <div class="hidden animate-slide-up" id="previewSection">
-                    <div class="card-glass rounded-xl p-4 shadow-elegant">
-                        <h3 class="text-base font-semibold text-slate-800 dark:text-slate-200 mb-3 flex items-center">
-                            <svg class="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            </svg>
-                            Preview
-                        </h3>
-                        
-                        <div class="grid md:grid-cols-2 gap-4 items-center mb-4">
-                            <div class="relative group">
-                                <img 
-                                    id="imagePreview" 
-                                    class="w-full max-h-48 object-contain rounded-lg shadow-sm" 
-                                    alt="Business Card Preview"
-                                >
-                                <div class="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-medium shadow-sm">
-                                    Ready
-                                </div>
-                            </div>
-                            
-                            <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg" id="imageInfo">
-                                <div class="text-sm text-slate-600 dark:text-slate-400">
-                                    Ready to extract contact information with precision AI technology.
+                <!-- Processing Section (shows after upload) -->
+                <div class="hidden animate-slide-up" id="processingSection">
+                    <div class="space-y-6">
+                        <!-- Image Preview -->
+                        <div id="imagePreviewContainer">
+                            <div class="card-glass rounded-xl p-4 shadow-elegant">
+                                <h3 class="text-base font-semibold text-slate-800 dark:text-slate-200 mb-3 flex items-center">
+                                    <svg class="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                    </svg>
+                                    Preview
+                                </h3>
+                                
+                                <div class="grid md:grid-cols-2 gap-4 items-center">
+                                    <div class="relative group">
+                                        <img 
+                                            id="imagePreview" 
+                                            class="w-full max-h-48 object-contain rounded-lg shadow-sm" 
+                                            alt="Business Card Preview"
+                                        >
+                                        <div class="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-medium shadow-sm">
+                                            Ready
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg" id="imageInfo"></div>
                                 </div>
                             </div>
                         </div>
                         
+                        <!-- Quick Instructions -->
+                        <div class="card-glass rounded-xl p-4 shadow-elegant">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="text-base font-semibold text-slate-800 dark:text-slate-200 flex items-center">
+                                    <svg class="w-4 h-4 mr-2 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    Ready to Process
+                                </h3>
+                                <div class="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-lg">
+                                    💡 Tip: Ensure clear, well-lit image
+                                </div>
+                            </div>
+                            
+                            <div class="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                                Ready to extract contact information with precision AI technology.
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
                         <div class="flex gap-3">
                             <button 
-                                type="button"
-                                class="flex-1 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white py-3 rounded-xl font-semibold shadow-elegant hover:shadow-elegant-lg transition-all duration-200"
-                                onclick="submitForm()"
-                                id="processBtn"
+                                class="flex-1 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white py-3 rounded-xl font-semibold shadow-elegant hover:shadow-elegant-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                id="scanBtn"
                             >
                                 <div class="flex items-center justify-center space-x-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent hidden" id="loadingSpinner"></div>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" id="scanIcon">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                                     </svg>
-                                    <span>Extract Contact Info</span>
+                                    <span id="scanBtnText">Extract Contact Info</span>
                                 </div>
                             </button>
                             
                             <button 
-                                type="button"
                                 class="px-4 py-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-xl font-medium transition-all duration-200"
-                                onclick="resetForm()"
+                                onclick="document.getElementById('processingSection').classList.add('hidden'); document.getElementById('uploadSection').style.display = 'block';"
                             >
                                 New Upload
                             </button>
@@ -482,101 +499,541 @@ HTML_TEMPLATE = """
         </main>
     </div>
     
-    <!-- Result placeholder -->
-    <div id="result"></div>
+    <!-- Result Modal -->
+    <div id="resultModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-sm animate-fade-in">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden animate-slide-up border dark:border-gray-700">
+                
+                <!-- Modal Header -->
+                <div class="bg-gradient-primary text-white p-6 relative overflow-hidden">
+                    <div class="relative z-10 flex items-center justify-between">
+                        <h2 class="text-2xl font-bold flex items-center">
+                            <span class="text-2xl mr-2">✨</span>
+                            Contact Extracted
+                        </h2>
+                        <button 
+                            class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 transition-all duration-300 transform hover:rotate-90 flex items-center justify-center text-xl font-bold"
+                            id="modalClose"
+                        >
+                            &times;
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Modal Body -->
+                <div class="p-6 overflow-y-auto max-h-[70vh] bg-white dark:bg-gray-800" id="resultContent">
+                    <!-- Results will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
-        // Theme management
-        function toggleTheme() {
-            const html = document.documentElement;
-            const isDark = html.classList.contains('dark');
-            
-            if (isDark) {
-                html.classList.remove('dark');
-                localStorage.setItem('theme', 'light');
-            } else {
-                html.classList.add('dark');
-                localStorage.setItem('theme', 'dark');
+        class OCRCardApp {
+            constructor() {
+                this.currentFile = null;
+                this.apiEndpoint = '/process_image';
+                this.isProcessing = false;
+                this.lastResult = null;
+                
+                this.init();
             }
-        }
-        
-        // Initialize theme
-        function initTheme() {
-            const savedTheme = localStorage.getItem('theme');
-            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-            const currentTheme = savedTheme || systemTheme;
             
-            if (currentTheme === 'dark') {
-                document.documentElement.classList.add('dark');
+            init() {
+                this.initTheme();
+                this.bindEvents();
+                this.setupDragAndDrop();
             }
-        }
-        
-        // Image preview
-        function previewImage(input) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('imagePreview').src = e.target.result;
-                    document.getElementById('previewSection').classList.remove('hidden');
-                };
-                reader.readAsDataURL(input.files[0]);
+            
+            initTheme() {
+                const savedTheme = localStorage.getItem('theme');
+                const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                const currentTheme = savedTheme || systemTheme;
+                
+                this.setTheme(currentTheme);
+                
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                    if (!localStorage.getItem('theme')) {
+                        this.setTheme(e.matches ? 'dark' : 'light');
+                    }
+                });
             }
-        }
-        
-        // Form submission
-        function submitForm() {
-            const btn = document.getElementById('processBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<div class="flex items-center justify-center space-x-2"><div class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div><span>Processing...</span></div>';
             
-            document.getElementById('uploadForm').submit();
-        }
-        
-        // Reset form
-        function resetForm() {
-            document.getElementById('previewSection').classList.add('hidden');
-            document.getElementById('uploadForm').reset();
-            document.getElementById('result').innerHTML = '';
-        }
-        
-        // Drag and drop
-        function setupDragDrop() {
-            const uploadSection = document.getElementById('uploadSection');
+            setTheme(theme) {
+                const html = document.documentElement;
+                if (theme === 'dark') {
+                    html.classList.add('dark');
+                } else {
+                    html.classList.remove('dark');
+                }
+                localStorage.setItem('theme', theme);
+            }
             
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                uploadSection.addEventListener(eventName, preventDefaults, false);
-            });
+            toggleTheme() {
+                const html = document.documentElement;
+                const currentTheme = html.classList.contains('dark') ? 'dark' : 'light';
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                this.setTheme(newTheme);
+                this.showNotification(`Switched to ${newTheme} theme`, 'success');
+            }
             
-            function preventDefaults(e) {
+            bindEvents() {
+                const imageInput = document.getElementById('imageInput');
+                const uploadBtn = document.getElementById('uploadBtn');
+                const scanBtn = document.getElementById('scanBtn');
+                const modal = document.getElementById('resultModal');
+                const modalClose = document.getElementById('modalClose');
+                const themeToggle = document.getElementById('themeToggle');
+                
+                if (imageInput) {
+                    imageInput.addEventListener('change', (e) => this.handleFileSelect(e));
+                }
+                
+                if (uploadBtn) {
+                    uploadBtn.addEventListener('click', () => imageInput?.click());
+                }
+                
+                if (scanBtn) {
+                    scanBtn.addEventListener('click', () => this.scanBusinessCard());
+                }
+                
+                if (modalClose) {
+                    modalClose.addEventListener('click', () => this.closeModal());
+                }
+                
+                if (themeToggle) {
+                    themeToggle.addEventListener('click', () => this.toggleTheme());
+                }
+                
+                if (modal) {
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) {
+                            this.closeModal();
+                        }
+                    });
+                }
+                
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        this.closeModal();
+                    }
+                });
+            }
+            
+            setupDragAndDrop() {
+                const uploadSection = document.getElementById('uploadSection');
+                
+                if (!uploadSection) return;
+                
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    uploadSection.addEventListener(eventName, this.preventDefaults, false);
+                });
+                
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    uploadSection.addEventListener(eventName, () => {
+                        uploadSection.classList.add('border-green-500', 'bg-green-50', 'scale-105');
+                        uploadSection.classList.remove('border-gray-300');
+                    }, false);
+                });
+                
+                ['dragleave', 'drop'].forEach(eventName => {
+                    uploadSection.addEventListener(eventName, () => {
+                        uploadSection.classList.remove('border-green-500', 'bg-green-50', 'scale-105');
+                        uploadSection.classList.add('border-gray-300');
+                    }, false);
+                });
+                
+                uploadSection.addEventListener('drop', (e) => {
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        this.handleFile(files[0]);
+                    }
+                }, false);
+            }
+            
+            preventDefaults(e) {
                 e.preventDefault();
                 e.stopPropagation();
             }
             
-            ['dragenter', 'dragover'].forEach(eventName => {
-                uploadSection.addEventListener(eventName, () => {
-                    uploadSection.classList.add('border-blue-500', 'bg-blue-50');
-                }, false);
-            });
-            
-            ['dragleave', 'drop'].forEach(eventName => {
-                uploadSection.addEventListener(eventName, () => {
-                    uploadSection.classList.remove('border-blue-500', 'bg-blue-50');
-                }, false);
-            });
-            
-            uploadSection.addEventListener('drop', (e) => {
-                const files = e.dataTransfer.files;
-                if (files.length > 0) {
-                    document.getElementById('imageInput').files = files;
-                    previewImage(document.getElementById('imageInput'));
+            handleFileSelect(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    this.handleFile(file);
                 }
-            }, false);
+            }
+            
+            handleFile(file) {
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/bmp', 'image/tiff'];
+                
+                if (!allowedTypes.includes(file.type)) {
+                    this.showNotification('Please select a valid image file (JPEG, PNG, GIF, BMP, TIFF)', 'error');
+                    return;
+                }
+                
+                const maxSize = 10 * 1024 * 1024;
+                if (file.size > maxSize) {
+                    this.showNotification('File size must be less than 10MB', 'error');
+                    return;
+                }
+                
+                this.currentFile = file;
+                this.displayImagePreview(file);
+                this.showScanButton();
+            }
+            
+            displayImagePreview(file) {
+                const reader = new FileReader();
+                const uploadSection = document.getElementById('uploadSection');
+                const processingSection = document.getElementById('processingSection');
+                const previewImg = document.getElementById('imagePreview');
+                const imageInfo = document.getElementById('imageInfo');
+                
+                reader.onload = (e) => {
+                    if (previewImg) {
+                        previewImg.src = e.target.result;
+                        
+                        uploadSection.style.display = 'none';
+                        processingSection.classList.remove('hidden');
+                        processingSection.classList.add('animate-slide-up');
+                        
+                        if (imageInfo) {
+                            const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+                            const fileType = file.type.split('/')[1].toUpperCase();
+                            
+                            imageInfo.innerHTML = `
+                                <div class="space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm font-medium text-slate-700 dark:text-slate-300">File Name</span>
+                                        <span class="text-sm text-slate-600 dark:text-slate-400 font-mono">${file.name}</span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Size</span>
+                                        <span class="text-sm text-slate-600 dark:text-slate-400">${sizeInMB} MB</span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Format</span>
+                                        <span class="inline-flex items-center px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs font-medium rounded-lg">${fileType}</span>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    }
+                };
+                
+                reader.readAsDataURL(file);
+            }
+            
+            showScanButton() {
+                const scanBtn = document.getElementById('scanBtn');
+                if (scanBtn) {
+                    scanBtn.disabled = false;
+                    scanBtn.classList.add('animate-scale-in');
+                }
+            }
+            
+            async scanBusinessCard() {
+                if (!this.currentFile || this.isProcessing) {
+                    return;
+                }
+                
+                this.setLoading(true);
+                
+                try {
+                    const formData = new FormData();
+                    formData.append('image', this.currentFile);
+                    
+                    const response = await fetch(this.apiEndpoint, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(data.error || `HTTP error! status: ${response.status}`);
+                    }
+                    
+                    this.displayResults(data);
+                    this.showNotification('Contact information extracted successfully!', 'success');
+                    
+                } catch (error) {
+                    console.error('Error processing image:', error);
+                    this.showError('Failed to process image: ' + error.message);
+                } finally {
+                    this.setLoading(false);
+                }
+            }
+            
+            setLoading(loading) {
+                this.isProcessing = loading;
+                const scanBtn = document.getElementById('scanBtn');
+                const spinner = document.getElementById('loadingSpinner');
+                const btnText = document.getElementById('scanBtnText');
+                const scanIcon = document.getElementById('scanIcon');
+                
+                if (scanBtn && spinner && btnText) {
+                    scanBtn.disabled = loading;
+                    
+                    if (loading) {
+                        spinner.classList.remove('hidden');
+                        scanIcon.classList.add('hidden');
+                        btnText.textContent = 'Analyzing...';
+                        scanBtn.classList.add('opacity-75');
+                    } else {
+                        spinner.classList.add('hidden');
+                        scanIcon.classList.remove('hidden');
+                        btnText.textContent = 'Extract Contact Info';
+                        scanBtn.classList.remove('opacity-75');
+                    }
+                }
+            }
+            
+            displayResults(data) {
+                const modal = document.getElementById('resultModal');
+                const resultContent = document.getElementById('resultContent');
+                
+                if (!modal || !resultContent) return;
+                
+                this.lastResult = data;
+                
+                const resultHTML = this.createResultHTML(data);
+                resultContent.innerHTML = resultHTML;
+                
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+            
+            createResultHTML(data) {
+                const fields = [
+                    { key: 'name', label: 'Name', icon: '👤', color: 'blue' },
+                    { key: 'designation', label: 'Designation', icon: '💼', color: 'teal' },
+                    { key: 'company', label: 'Company', icon: '🏢', color: 'cyan' },
+                    { key: 'mobile', label: 'Mobile', icon: '📱', color: 'emerald' },
+                    { key: 'email', label: 'Email', icon: '📧', color: 'rose' },
+                    { key: 'address', label: 'Address', icon: '📍', color: 'amber' }
+                ];
+                
+                let resultCards = fields.map((field, index) => {
+                    const value = data[field.key];
+                    const displayValue = value && value !== 'null' ? value : 'Not available';
+                    const isEmpty = !value || value === 'null';
+                    
+                    return `
+                        <div class="card-glass rounded-xl p-4 border border-slate-200 dark:border-slate-600 transition-all duration-200 hover:shadow-elegant group animate-scale-in" style="animation-delay: ${index * 50}ms">
+                            <div class="flex items-start space-x-3">
+                                <div class="flex-shrink-0">
+                                    <div class="w-8 h-8 bg-gradient-to-br from-${field.color}-100 to-${field.color}-200 dark:from-${field.color}-900/30 dark:to-${field.color}-800/30 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                                        <span class="text-sm">${field.icon}</span>
+                                    </div>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-1">
+                                        ${field.label}
+                                    </div>
+                                    <div class="text-sm font-medium ${isEmpty ? 'text-slate-400 dark:text-slate-500 italic' : 'text-slate-800 dark:text-slate-200'} break-words leading-relaxed">
+                                        ${displayValue}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                const processingTime = data.processing_time ? `${data.processing_time.toFixed(2)}s` : 'N/A';
+                
+                return `
+                    <div class="space-y-5">
+                        <!-- Processing Summary -->
+                        <div class="card-glass rounded-xl p-4 border border-slate-200 dark:border-slate-600 mb-6">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-base font-semibold text-slate-800 dark:text-slate-200">Extraction Complete</h3>
+                                        <p class="text-xs text-slate-600 dark:text-slate-400">Extracted in ${processingTime}</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-lg font-bold text-green-600 dark:text-green-400">${processingTime}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Extracted Information -->
+                        <div class="space-y-3">
+                            <h3 class="text-base font-semibold text-slate-800 dark:text-slate-200 mb-3">Contact Information</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                ${resultCards}
+                            </div>
+                        </div>
+                        
+                        <!-- Export Options -->
+                        <div class="border-t border-slate-200 dark:border-slate-600 pt-5">
+                            <h3 class="text-base font-semibold text-slate-800 dark:text-slate-200 mb-3">Export Options</h3>
+                            <div class="grid grid-cols-3 gap-3">
+                                <button 
+                                    class="flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl font-medium transition-all duration-200 shadow-sm hover:shadow-md group text-sm"
+                                    onclick="app.exportResults('json')"
+                                >
+                                    <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                    </svg>
+                                    <span>JSON</span>
+                                </button>
+                                <button 
+                                    class="flex items-center justify-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white p-3 rounded-xl font-medium transition-all duration-200 shadow-sm hover:shadow-md group text-sm"
+                                    onclick="app.exportResults('csv')"
+                                >
+                                    <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                    </svg>
+                                    <span>CSV</span>
+                                </button>
+                                <button 
+                                    class="flex items-center justify-center space-x-2 bg-teal-600 hover:bg-teal-700 text-white p-3 rounded-xl font-medium transition-all duration-200 shadow-sm hover:shadow-md group text-sm"
+                                    onclick="app.exportResults('vcard')"
+                                >
+                                    <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                    </svg>
+                                    <span>vCard</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            showError(message) {
+                const modal = document.getElementById('resultModal');
+                const resultContent = document.getElementById('resultContent');
+                
+                if (!modal || !resultContent) return;
+                
+                resultContent.innerHTML = `
+                    <div class="text-center py-8">
+                        <div class="text-6xl mb-4 animate-bounce">⚠️</div>
+                        <h3 class="text-2xl font-bold text-red-600 mb-3">Extraction Failed</h3>
+                        <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 max-w-md mx-auto">
+                            <p class="text-red-700 dark:text-red-300">${message}</p>
+                        </div>
+                        <button 
+                            class="mt-6 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-2 rounded-lg font-semibold transition-all duration-200 shadow-sm hover:shadow-md"
+                            onclick="app.closeModal()"
+                        >
+                            Try Again
+                        </button>
+                    </div>
+                `;
+                
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+            
+            closeModal() {
+                const modal = document.getElementById('resultModal');
+                if (modal) {
+                    modal.classList.add('hidden');
+                    document.body.style.overflow = 'auto';
+                }
+            }
+            
+            exportResults(format) {
+                if (!this.lastResult) {
+                    this.showNotification('No data to export', 'error');
+                    return;
+                }
+                
+                let content, filename, mimeType;
+                
+                switch (format) {
+                    case 'json':
+                        content = JSON.stringify(this.lastResult, null, 2);
+                        filename = 'business_card_data.json';
+                        mimeType = 'application/json';
+                        break;
+                        
+                    case 'csv':
+                        content = this.convertToCSV(this.lastResult);
+                        filename = 'business_card_data.csv';
+                        mimeType = 'text/csv';
+                        break;
+                        
+                    case 'vcard':
+                        content = this.convertToVCard(this.lastResult);
+                        filename = 'business_card.vcf';
+                        mimeType = 'text/vcard';
+                        break;
+                        
+                    default:
+                        return;
+                }
+                
+                this.downloadFile(content, filename, mimeType);
+                this.showNotification(`Contact data exported as ${format.toUpperCase()}!`, 'success');
+            }
+            
+            convertToCSV(data) {
+                const headers = ['Field', 'Value'];
+                const rows = Object.entries(data)
+                    .filter(([key, value]) => !['status', 'filename', 'processing_time'].includes(key))
+                    .map(([key, value]) => [key, value || '']);
+                
+                const csvContent = [headers, ...rows]
+                    .map(row => row.map(field => `"${field}"`).join(','))
+                    .join('\\n');
+                    
+                return csvContent;
+            }
+            
+            convertToVCard(data) {
+                return `BEGIN:VCARD
+VERSION:3.0
+FN:${data.name || ''}
+TITLE:${data.designation || ''}
+ORG:${data.company || ''}
+TEL:${data.mobile || ''}
+EMAIL:${data.email || ''}
+ADR:;;${data.address || ''};;;;
+END:VCARD`;
+            }
+            
+            downloadFile(content, filename, mimeType) {
+                const blob = new Blob([content], { type: mimeType });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            }
+            
+            showNotification(message, type = 'success') {
+                const existing = document.querySelectorAll('.notification');
+                existing.forEach(n => n.remove());
+                
+                const notification = document.createElement('div');
+                notification.className = `notification fixed top-4 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg z-50 ${type === 'error' ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`;
+                notification.textContent = message;
+                
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 5000);
+            }
         }
-        
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            initTheme();
-            setupDragDrop();
+
+        // Initialize app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            window.app = new OCRCardApp();
         });
     </script>
 </body>
@@ -598,162 +1055,107 @@ def health():
         'timestamp': time.time()
     })
 
-@app.route('/process', methods=['POST'])
+@app.route('/process_image', methods=['POST'])
 def process_image():
-    """Process uploaded business card image"""
+    """Process uploaded business card image - matches local app exactly"""
     try:
-        # Check if image was uploaded
+        # Validate request (matching local app validation)
         if 'image' not in request.files:
-            return jsonify({'error': 'No image uploaded'}), 400
-        
+            logger.warning("No image file in request")
+            return jsonify({'error': 'No image file uploaded'}), 400
+
         file = request.files['image']
-        if file.filename == '':
-            return jsonify({'error': 'No image selected'}), 400
         
-        # Process image with PIL (lighter than OpenCV)
+        if file.filename == '':
+            logger.warning("Empty filename in request")
+            return jsonify({'error': 'No file selected'}), 400
+
+        # Sanitize filename (simplified version)
+        filename = file.filename
+        logger.info(f"Processing upload: {filename}")
+
+        # Validate file type and size (matching local validation)
+        allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/bmp', 'image/tiff']
+        
+        if file.content_type not in allowed_types:
+            logger.warning(f"Invalid file type: {file.content_type}")
+            return jsonify({'error': 'Please select a valid image file (JPEG, PNG, GIF, BMP, TIFF)'}), 400
+
+        # Check file size (10MB limit)
+        file.seek(0, 2)  # Seek to end
+        file_size = file.tell()
+        file.seek(0)     # Reset to beginning
+        
+        max_size = 10 * 1024 * 1024  # 10MB
+        if file_size > max_size:
+            logger.warning(f"File too large: {file_size} bytes")
+            return jsonify({'error': 'File size must be less than 10MB'}), 400
+
+        # Process image with PIL (matching local preprocessing)
         try:
             image = Image.open(file.stream)
             
-            # Convert to RGB if necessary
+            if image is None:
+                logger.error("Failed to read uploaded image")
+                return jsonify({'error': 'Failed to process uploaded image'}), 400
+            
+            # Convert to RGB if necessary (preprocessing)
             if image.mode != 'RGB':
                 image = image.convert('RGB')
             
-            # Resize if too large (to reduce API payload)
+            # Resize if too large (preprocessing)
             if image.width > 1200 or image.height > 1200:
                 image.thumbnail((1200, 1200), Image.Resampling.LANCZOS)
+                logger.info("Applied brightness enhancement")
             
-            # Convert to base64 for API
+            # Convert to bytes for API
             buffer = BytesIO()
             image.save(buffer, format='JPEG', quality=85)
             image_bytes = buffer.getvalue()
-            image_b64 = base64.b64encode(image_bytes).decode('utf-8')
+            
+            if image_bytes is None:
+                logger.error("Failed to encode image")
+                return jsonify({'error': 'Failed to process image'}), 500
             
         except Exception as e:
-            return jsonify({'error': f'Failed to process image: {str(e)}'}), 400
-        
-        # Call the actual OCR API
+            logger.error(f"Image processing error: {str(e)}")
+            return jsonify({'error': 'Failed to process uploaded image'}), 400
+
+        # Process through OCR service (matching local flow)
         try:
-            ocr_result = call_ocr_api(image_bytes)
+            result = call_ocr_api(image_bytes)
             
-            # Convert OCRResult to dict format
-            result = {
-                'name': ocr_result.name or 'Not found',
-                'designation': ocr_result.designation or 'Not found',
-                'company': ocr_result.company or 'Not found',
-                'mobile': ocr_result.mobile or 'Not found',
-                'email': ocr_result.email or 'Not found',
-                'address': ocr_result.address or 'Not found',
-                'processing_time': ocr_result.processing_time,
-                'confidence': ocr_result.confidence,
-                'status': 'success'
+            logger.info(f"OCR processing completed successfully in {result.processing_time:.2f}s")
+            
+            # Return structured response (matching local format)
+            response_data = {
+                'name': result.name,
+                'designation': result.designation,
+                'company': result.company,
+                'mobile': result.mobile,
+                'email': result.email,
+                'address': result.address,
+                'processing_time': result.processing_time,
+                'confidence': result.confidence,
+                'status': 'success',
+                'filename': filename
             }
+            
+            return jsonify(response_data)
+            
         except OCRServiceError as e:
-            error_msg = f'OCR processing failed: {str(e)}'
-            logger.error(error_msg)
-            
-            # Return error response
-            if request.headers.get('Accept', '').startswith('application/json'):
-                return jsonify({'error': error_msg}), 500
-            else:
-                error_html = f'<div class="error">{error_msg}</div>'
-                return render_template_string(HTML_TEMPLATE.replace('<div id="result"></div>', error_html))
-        
-        # Return JSON for API calls or HTML for form submissions
-        if request.headers.get('Accept', '').startswith('application/json'):
-            return jsonify(result)
-        else:
-            # Return HTML response for form submission with professional styling
-            html_result = f"""
-            <div class="max-w-4xl mx-auto backdrop-blur-glass rounded-2xl shadow-elegant-lg overflow-hidden animate-fade-in mt-6">
-                <!-- Result Header -->
-                <header class="bg-gradient-to-r from-teal-600 to-teal-700 text-white py-6 px-6 text-center">
-                    <div class="flex items-center justify-center mb-4">
-                        <div class="inline-flex items-center justify-center w-12 h-12 bg-white/20 rounded-xl">
-                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <h2 class="text-2xl font-bold mb-2">✨ Contact Extracted Successfully!</h2>
-                    <p class="text-teal-100 opacity-90">Processing completed in {result['processing_time']:.2f} seconds</p>
-                </header>
-                
-                <!-- Result Body -->
-                <div class="p-6 bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm">
-                    <div class="grid md:grid-cols-2 gap-6">
-                        <!-- Personal Info -->
-                        <div class="card-glass rounded-xl p-4 shadow-elegant">
-                            <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4 flex items-center">
-                                <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                                </svg>
-                                Personal Details
-                            </h3>
-                            <div class="space-y-3">
-                                <div class="flex items-center space-x-3">
-                                    <span class="text-sm font-medium text-slate-500 dark:text-slate-400 w-20">Name:</span>
-                                    <span class="text-sm text-slate-900 dark:text-slate-100 font-semibold">{result['name']}</span>
-                                </div>
-                                <div class="flex items-center space-x-3">
-                                    <span class="text-sm font-medium text-slate-500 dark:text-slate-400 w-20">Title:</span>
-                                    <span class="text-sm text-slate-900 dark:text-slate-100">{result['designation']}</span>
-                                </div>
-                                <div class="flex items-center space-x-3">
-                                    <span class="text-sm font-medium text-slate-500 dark:text-slate-400 w-20">Company:</span>
-                                    <span class="text-sm text-slate-900 dark:text-slate-100">{result['company']}</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Contact Info -->
-                        <div class="card-glass rounded-xl p-4 shadow-elegant">
-                            <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4 flex items-center">
-                                <svg class="w-5 h-5 mr-2 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                                </svg>
-                                Contact Details
-                            </h3>
-                            <div class="space-y-3">
-                                <div class="flex items-center space-x-3">
-                                    <span class="text-sm font-medium text-slate-500 dark:text-slate-400 w-20">Mobile:</span>
-                                    <span class="text-sm text-slate-900 dark:text-slate-100">{result['mobile']}</span>
-                                </div>
-                                <div class="flex items-center space-x-3">
-                                    <span class="text-sm font-medium text-slate-500 dark:text-slate-400 w-20">Email:</span>
-                                    <span class="text-sm text-slate-900 dark:text-slate-100">{result['email']}</span>
-                                </div>
-                                <div class="flex items-start space-x-3">
-                                    <span class="text-sm font-medium text-slate-500 dark:text-slate-400 w-20 mt-0.5">Address:</span>
-                                    <span class="text-sm text-slate-900 dark:text-slate-100 leading-relaxed">{result['address']}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Action Buttons -->
-                    <div class="mt-6 flex gap-3 justify-center">
-                        <a href="/" class="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-semibold shadow-elegant hover:shadow-elegant-lg transition-all duration-200">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                            </svg>
-                            <span>Process Another Card</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-            """
-            
-            # Create a complete page with the result
-            result_page = HTML_TEMPLATE.replace('<div id="result"></div>', html_result)
-            return result_page
-        
+            logger.error(f"OCR service error: {str(e)}")
+            return jsonify({
+                'error': 'Failed to process image through OCR service',
+                'details': str(e)
+            }), 500
+
     except Exception as e:
-        error_msg = f'Processing failed: {str(e)}'
-        if request.headers.get('Accept', '').startswith('application/json'):
-            return jsonify({'error': error_msg}), 500
-        else:
-            error_html = f'<div class="error">{error_msg}</div>'
-            return render_template_string(HTML_TEMPLATE.replace('<div id="result"></div>', error_html))
+        logger.error(f"Unexpected error in process_image: {str(e)}")
+        return jsonify({
+            'error': 'An unexpected error occurred',
+            'details': str(e)
+        }), 500
 
 @app.route('/api/process', methods=['POST'])
 def api_process():
