@@ -15,6 +15,197 @@ import base64
 from io import BytesIO
 from PIL import Image
 import time
+import logging
+from dataclasses import dataclass
+from typing import Optional, Dict, Any
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
+# Setup logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+@dataclass
+class OCRResult:
+    """Data class for OCR processing results"""
+    name: Optional[str] = None
+    designation: Optional[str] = None
+    company: Optional[str] = None
+    mobile: Optional[str] = None
+    email: Optional[str] = None
+    address: Optional[str] = None
+    confidence: Optional[float] = None
+    processing_time: Optional[float] = None
+    raw_response: Optional[Dict[Any, Any]] = None
+    
+    @classmethod
+    def from_api_response(cls, response_data: Dict[Any, Any], processing_time: float = None) -> 'OCRResult':
+        """Create OCRResult from API response"""
+        return cls(
+            name=response_data.get('name'),
+            designation=response_data.get('designation'),
+            company=response_data.get('company', response_data.get('company_name')),
+            mobile=response_data.get('mobile', response_data.get('phone')),
+            email=response_data.get('email'),
+            address=response_data.get('address'),
+            processing_time=processing_time,
+            raw_response=response_data
+        )
+
+class OCRServiceError(Exception):
+    """Custom exception for OCR service errors"""
+    pass
+
+def call_ocr_api(image_bytes: bytes) -> OCRResult:
+    """
+    Call the OCR API to process business card image
+    
+    Args:
+        image_bytes: Image data as bytes
+        
+    Returns:
+        OCRResult object with extracted information
+        
+    Raises:
+        OCRServiceError: If processing fails
+    """
+    # Configuration
+    OCR_API_URL = os.getenv('OCR_API_URL', 'http://3.108.164.82:1428/upload')
+    REQUEST_TIMEOUT = int(os.getenv('REQUEST_TIMEOUT', '30'))
+    MAX_RETRIES = int(os.getenv('MAX_RETRIES', '3'))
+    RETRY_DELAY = float(os.getenv('RETRY_DELAY', '1.0'))
+    
+    query = ("I am providing business cards. I want JSON output with keys like "
+            "name, company name, mobile number, email, and address in a structured format.")
+    
+    files = {'image': ('business_card.jpg', image_bytes, 'image/jpeg')}
+    data = {'query': query}
+    
+    # Setup session with retry strategy
+    session = requests.Session()
+    retry_strategy = Retry(
+        total=MAX_RETRIES,
+        status_forcelist=[429, 500, 502, 503, 504],
+        backoff_factor=RETRY_DELAY,
+        allowed_methods=["POST"]
+    )
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    
+    start_time = time.perf_counter()
+    
+    try:
+        logger.info(f"Sending OCR request to {OCR_API_URL}")
+        
+        response = session.post(
+            OCR_API_URL,
+            files=files,
+            data=data,
+            timeout=REQUEST_TIMEOUT
+        )
+        
+        processing_time = time.perf_counter() - start_time
+        logger.info(f"OCR API response received in {processing_time:.2f} seconds")
+        
+        # Check response status
+        if response.status_code != 200:
+            error_msg = f"OCR API returned status {response.status_code}: {response.text}"
+            logger.error(error_msg)
+            raise OCRServiceError(error_msg)
+        
+        # Parse response
+        try:
+            response_text = response.text.strip()
+            logger.info(f"OCR API raw response: {repr(response_text[:300])}...")
+            
+            # Handle multiple JSON objects in response by taking the first one
+            if response_text.count('{') > 1:
+                logger.warning("Response contains multiple JSON objects, extracting first one")
+                brace_count = 0
+                json_end = 0
+                for i, char in enumerate(response_text):
+                    if char == '{':
+                        brace_count += 1
+                    elif char == '}':
+                        brace_count -= 1
+                        if brace_count == 0:
+                            json_end = i + 1
+                            break
+                response_text = response_text[:json_end]
+                logger.info(f"Extracted JSON: {repr(response_text)}")
+            
+            # Clean up the response text
+            if response_text.startswith('"') and response_text.endswith('"'):
+                response_text = response_text[1:-1]
+                logger.info(f"Removed wrapping quotes")
+            
+            if response_text.endswith('.'):
+                response_text = response_text[:-1]
+                logger.info(f"Removed trailing period")
+            
+            # Unescape the JSON
+            if '\\' in response_text:
+                response_text = response_text.replace('\\"', '"').replace('\\\\', '\\')
+                logger.info(f"Unescaped JSON")
+            
+            # Parse JSON
+            try:
+                response_data = json.loads(response_text)
+                logger.info(f"Successfully parsed JSON response")
+            except json.JSONDecodeError as e:
+                logger.warning(f"First JSON parse failed: {e}")
+                # Try to find just the JSON part
+                start_brace = response_text.find('{')
+                end_brace = response_text.rfind('}')
+                if start_brace != -1 and end_brace != -1:
+                    json_part = response_text[start_brace:end_brace + 1]
+                    logger.info(f"Trying JSON part: {repr(json_part)}")
+                    response_data = json.loads(json_part)
+                    logger.info(f"Successfully parsed extracted JSON part")
+                else:
+                    logger.error(f"Could not find valid JSON braces in: {repr(response_text)}")
+                    raise
+            
+            # Validate response structure
+            if not isinstance(response_data, dict):
+                logger.warning("OCR API returned non-dict response, attempting to parse")
+                if isinstance(response_data, str):
+                    response_data = json.loads(response_data.strip())
+            
+            # Create OCRResult from response
+            result = OCRResult.from_api_response(response_data, processing_time)
+            
+            # Log extracted information
+            logger.info(f"OCR extraction completed: name={result.name}, "
+                       f"company={result.company}, email={result.email}")
+            
+            return result
+            
+        except json.JSONDecodeError as e:
+            error_msg = f"Failed to parse OCR API response as JSON: {str(e)}"
+            logger.error(error_msg)
+            raise OCRServiceError(error_msg)
+            
+    except requests.exceptions.Timeout:
+        error_msg = f"OCR API request timed out after {REQUEST_TIMEOUT} seconds"
+        logger.error(error_msg)
+        raise OCRServiceError(error_msg)
+        
+    except requests.exceptions.ConnectionError as e:
+        error_msg = f"Failed to connect to OCR API: {str(e)}"
+        logger.error(error_msg)
+        raise OCRServiceError(error_msg)
+        
+    except requests.exceptions.RequestException as e:
+        error_msg = f"OCR API request failed: {str(e)}"
+        logger.error(error_msg)
+        raise OCRServiceError(error_msg)
+        
+    except Exception as e:
+        error_msg = f"Unexpected error during OCR processing: {str(e)}"
+        logger.error(error_msg)
+        raise OCRServiceError(error_msg)
 
 # Simple Flask app for Vercel
 app = Flask(__name__)
@@ -100,19 +291,32 @@ def process_image():
         except Exception as e:
             return jsonify({'error': f'Failed to process image: {str(e)}'}), 400
         
-        # Mock OCR processing (replace with actual OCR service)
-        # This is where you'd call your OCR API
-        result = {
-            'name': 'Sample Name',
-            'designation': 'Software Engineer',
-            'company': 'Tech Company Ltd.',
-            'mobile': '+1-234-567-8900',
-            'email': 'sample@techcompany.com',
-            'address': '123 Tech Street, Silicon Valley, CA',
-            'processing_time': 1.2,
-            'confidence': 0.85,
-            'status': 'success'
-        }
+        # Call the actual OCR API
+        try:
+            ocr_result = call_ocr_api(image_bytes)
+            
+            # Convert OCRResult to dict format
+            result = {
+                'name': ocr_result.name or 'Not found',
+                'designation': ocr_result.designation or 'Not found',
+                'company': ocr_result.company or 'Not found',
+                'mobile': ocr_result.mobile or 'Not found',
+                'email': ocr_result.email or 'Not found',
+                'address': ocr_result.address or 'Not found',
+                'processing_time': ocr_result.processing_time,
+                'confidence': ocr_result.confidence,
+                'status': 'success'
+            }
+        except OCRServiceError as e:
+            error_msg = f'OCR processing failed: {str(e)}'
+            logger.error(error_msg)
+            
+            # Return error response
+            if request.headers.get('Accept', '').startswith('application/json'):
+                return jsonify({'error': error_msg}), 500
+            else:
+                error_html = f'<div class="error">{error_msg}</div>'
+                return render_template_string(HTML_TEMPLATE.replace('<div id="result"></div>', error_html))
         
         # Return JSON for API calls or HTML for form submissions
         if request.headers.get('Accept', '').startswith('application/json'):
