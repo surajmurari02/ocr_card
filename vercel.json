@@ -9,11 +9,6 @@
     "FLASK_ENV": "production",
     "PYTHONPATH": "."
   },
-  "functions": {
-    "api/index.py": {
-      "runtime": "python3.9"
-    }
-  },
   "headers": [
     {
       "source": "/api/(.*)",
